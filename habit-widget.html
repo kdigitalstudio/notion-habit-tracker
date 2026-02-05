@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .tracker {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .habit-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .habit-label {
+            min-width: 120px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-right: 12px;
+        }
+
+        .streak-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            white-space: nowrap;
+        }
+
+        .days-container {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .days-grid {
+            display: flex;
+            gap: 6px;
+            min-width: min-content;
+        }
+
+        .day-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .day-label {
+            font-size: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+        }
+
+        .day-cell {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 2px solid currentColor;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.3;
+            position: relative;
+        }
+
+        .day-cell:hover {
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+
+        .day-cell.completed {
+            opacity: 1;
+            background: currentColor;
+        }
+
+        .day-cell.completed::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .day-cell.today {
+            box-shadow: 0 0 0 3px currentColor;
+            opacity: 0.5;
+        }
+
+        .day-cell.today.completed {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="tracker" id="tracker"></div>
+
+    <script>
+        // Get URL parameters
+        const params = new URLSearchParams(window.location.search);
+        
+        // Parse settings
+        const settings = {
+            habits: JSON.parse(params.get('habits') || '[{"name":"Exercise","color":"#48bb78"},{"name":"Read","color":"#667eea"}]'),
+            daysToShow: parseInt(params.get('daysToShow')) || 7,
+            weekStart: params.get('weekStart') || 'sunday',
+            showStreak: params.get('showStreak') !== 'false',
+            showDayLabels: params.get('showDayLabels') !== 'false',
+            showBorder: params.get('showBorder') === 'true',
+            compactMode: params.get('compactMode') === 'true',
+            darkMode: params.get('darkMode') === 'true',
+            textColor: params.get('textColor') || '#37352F',
+            labelColor: params.get('labelColor') || '#718096',
+            bgColor: params.get('bgColor') || '#FFFFFF'
+        };
+
+        // Apply styles
+        document.body.style.background = settings.bgColor;
+        
+        const tracker = document.getElementById('tracker');
+        if (settings.showBorder) {
+            tracker.style.border = `2px solid ${settings.textColor}22`;
+            tracker.style.borderRadius = '16px';
+            tracker.style.padding = '20px';
+        }
+
+        if (settings.compactMode) {
+            document.querySelectorAll('.day-cell').forEach(cell => {
+                cell.style.width = '24px';
+                cell.style.height = '24px';
+            });
+            document.querySelectorAll('.days-grid').forEach(grid => {
+                grid.style.gap = '4px';
+            });
+            document.querySelectorAll('.habit-label').forEach(label => {
+                label.style.fontSize = '11px';
+            });
+        }
+
+        // Storage key
+        const STORAGE_KEY = 'habitTracker_v2';
+
+        // Get current week identifier
+        function getCurrentWeekKey() {
+            const now = new Date();
+            const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+            
+            // Calculate days to subtract to get to start of current week
+            let daysToSubtract;
+            if (settings.weekStart === 'monday') {
+                daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            } else {
+                daysToSubtract = dayOfWeek;
+            }
+            
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - daysToSubtract);
+            weekStart.setHours(0, 0, 0, 0);
+            
+            return weekStart.toISOString().split('T')[0];
+        }
+
+        // Initialize or load data
+        let habitData = loadData();
+
+        function loadData() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const allData = JSON.parse(stored);
+                    const currentWeekKey = getCurrentWeekKey();
+                    
+                    // Return only current week's data, discard old weeks
+                    if (allData.weekKey === currentWeekKey) {
+                        return allData;
+                    } else {
+                        // New week, start fresh
+                        return {
+                            weekKey: currentWeekKey,
+                            habits: {}
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading data:', e);
+            }
+            return {
+                weekKey: getCurrentWeekKey(),
+                habits: {}
+            };
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(habitData));
+            } catch (e) {
+                console.error('Error saving data:', e);
+            }
+        }
+
+        function getDateKey(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function isCompleted(habitName, date) {
+            const dateKey = getDateKey(date);
+            return habitData.habits[habitName] && habitData.habits[habitName][dateKey] === 1;
+        }
+
+        function toggleDay(habitName, date) {
+            const dateKey = getDateKey(date);
+            
+            // Check if we need to reset for a new week
+            const currentWeekKey = getCurrentWeekKey();
+            if (habitData.weekKey !== currentWeekKey) {
+                habitData = {
+                    weekKey: currentWeekKey,
+                    habits: {}
+                };
+            }
+            
+            if (!habitData.habits[habitName]) {
+                habitData.habits[habitName] = {};
+            }
+            
+            if (habitData.habits[habitName][dateKey] === 1) {
+                delete habitData.habits[habitName][dateKey];
+            } else {
+                habitData.habits[habitName][dateKey] = 1;
+            }
+            
+            saveData();
+            renderTracker();
+        }
+
+        function calculateStreak(habitName) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            let streak = 0;
+            
+            // Count consecutive days backwards from today
+            for (let i = 0; i < 365; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                
+                if (isCompleted(habitName, date)) {
+                    streak++;
+                } else {
+                    // If we haven't started tracking yet today, don't break the streak
+                    if (i === 0) {
+                        continue;
+                    }
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
+        function renderTracker() {
+            const today = new Date();
+            const days = [];
+            
+            // Generate days
+            for (let i = settings.daysToShow - 1; i >= 0; i--) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - i);
+                days.push(date);
+            }
+
+            // If week starts on Monday, adjust the display to start from most recent Monday
+            if (settings.weekStart === 'monday' && settings.daysToShow === 7) {
+                const todayDayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+                const daysFromMonday = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1;
+                
+                // Regenerate days array starting from this week's Monday
+                days.length = 0;
+                for (let i = daysFromMonday; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    days.push(date);
+                }
+                
+                // Fill remaining days up to 7
+                while (days.length < 7) {
+                    const lastDate = days[days.length - 1];
+                    const nextDate = new Date(lastDate);
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    days.push(nextDate);
+                }
+            } else if (settings.weekStart === 'sunday' && settings.daysToShow === 7) {
+                const todayDayOfWeek = today.getDay(); // 0 = Sunday
+                
+                // Regenerate days array starting from this week's Sunday
+                days.length = 0;
+                for (let i = todayDayOfWeek; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    days.push(date);
+                }
+                
+                // Fill remaining days up to 7
+                while (days.length < 7) {
+                    const lastDate = days[days.length - 1];
+                    const nextDate = new Date(lastDate);
+                    nextDate.setDate(nextDate.getDate() + 1);
+                    days.push(nextDate);
+                }
+            }
+
+            // Render tracker
+            let html = '';
+            
+            settings.habits.forEach((habit, habitIndex) => {
+                const streak = calculateStreak(habit.name);
+                
+                html += `
+                    <div class="habit-row">
+                        <div class="habit-label" style="color: ${settings.textColor}">
+                            ${habit.name}
+                            ${settings.showStreak ? `<span class="streak-badge" style="background: ${habit.color}22; color: ${habit.color}">${streak}🔥</span>` : ''}
+                        </div>
+                        <div class="days-container">
+                            <div class="days-grid">
+                                ${days.map((date, dayIndex) => {
+                                    const isToday = getDateKey(date) === getDateKey(today);
+                                    const completed = isCompleted(habit.name, date);
+                                    const dayLabel = date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+                                    
+                                    return `
+                                        <div class="day-column">
+                                            ${habitIndex === 0 && settings.showDayLabels ? 
+                                                `<div class="day-label" style="color: ${settings.labelColor}">${dayLabel}</div>` : 
+                                                '<div class="day-label"></div>'}
+                                            <div class="day-cell ${completed ? 'completed' : ''} ${isToday ? 'today' : ''}" 
+                                                 style="color: ${habit.color}"
+                                                 onclick="toggleDay('${habit.name.replace(/'/g, "\\'")}', new Date('${date.toISOString()}'))"
+                                                 title="${habit.name} - ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            tracker.innerHTML = html;
+        }
+
+        // Make toggleDay available globally
+        window.toggleDay = toggleDay;
+
+        // Initial render
+        renderTracker();
+
+        // Update at end of week (Saturday 11:59:59 PM for Sunday start, Sunday 11:59:59 PM for Monday start)
+        function scheduleNextUpdate() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            
+            // Determine the last day of the week
+            let lastDayOfWeek = settings.weekStart === 'sunday' ? 6 : 0; // Saturday for Sunday start, Sunday for Monday start
+            
+            // Calculate days until end of week
+            let daysUntilEndOfWeek;
+            if (settings.weekStart === 'sunday') {
+                daysUntilEndOfWeek = dayOfWeek === 6 ? 0 : (6 - dayOfWeek);
+            } else {
+                daysUntilEndOfWeek = dayOfWeek === 0 ? 0 : (7 - dayOfWeek);
+            }
+            
+            const endOfWeek = new Date(now);
+            endOfWeek.setDate(now.getDate() + daysUntilEndOfWeek);
+            endOfWeek.setHours(23, 59, 59, 999);
+            
+            const timeUntilEndOfWeek = endOfWeek - now;
+            
+            setTimeout(() => {
+                // Check if we're in a new week and reset if needed
+                const currentWeekKey = getCurrentWeekKey();
+                if (habitData.weekKey !== currentWeekKey) {
+                    habitData = {
+                        weekKey: currentWeekKey,
+                        habits: {}
+                    };
+                    saveData();
+                }
+                renderTracker();
+                scheduleNextUpdate();
+            }, timeUntilEndOfWeek + 1000); // Add 1 second to ensure we're past midnight
+        }
+
+        scheduleNextUpdate();
+    </script>
+</body>
+</html>
