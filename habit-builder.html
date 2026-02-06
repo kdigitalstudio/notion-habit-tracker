@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker Widget Builder | KDigitalStudio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #E8DFF5 0%, #FCE1E4 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Ko-fi Container */
+        .kofi-container {
+            position: fixed;
+            left: calc(50% + 350px);
+            top: calc(50% - 100px);
+            transform: translateY(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 200px;
+            z-index: 1000;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .kofi-container:hover {
+            transform: translateY(-50%) translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Feedback Container */
+        .feedback-container {
+            position: fixed;
+            left: calc(50% + 350px);
+            top: calc(50% + 100px);
+            transform: translateY(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 200px;
+            z-index: 1000;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .feedback-container:hover {
+            transform: translateY(-50%) translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .kofi-text,
+        .feedback-text {
+            font-size: 14px;
+            color: #4a5568;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .kofi-button,
+        .feedback-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #b794d5 0%, #f4c3d9 100%);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: transform 0.2s ease;
+        }
+
+        .kofi-button:hover,
+        .feedback-button:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .kofi-container {
+                position: static;
+                transform: none;
+                margin: 0 auto 20px;
+                max-width: 250px;
+            }
+            
+            .kofi-container:hover {
+                transform: translateY(-2px);
+            }
+
+            .feedback-container {
+                position: static;
+                transform: none;
+                margin: 0 auto 20px;
+                max-width: 250px;
+            }
+            
+            .feedback-container:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        h1 {
+            font-size: 28px;
+            color: #2d3748;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="color"],
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="color"] {
+            height: 50px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .toggle-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .toggle-group.single {
+            grid-template-columns: 1fr;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .toggle-item:has(input:checked) {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: 0.3s;
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .habit-list {
+            margin-top: 15px;
+        }
+
+        .habit-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .habit-item input[type="text"] {
+            flex: 1;
+            padding: 8px 12px;
+            margin-bottom: 0;
+        }
+
+        .habit-item input[type="color"] {
+            width: 50px;
+            height: 40px;
+            padding: 2px;
+        }
+
+        .habit-item .remove-btn {
+            padding: 8px 12px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        .habit-item .remove-btn:hover {
+            background: #f56565;
+        }
+
+        .add-habit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .add-habit-btn:hover {
+            background: #5a67d8;
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .color-row:last-child {
+            border-bottom: none;
+        }
+
+        .color-row label {
+            margin-bottom: 0;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .color-row-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-hex {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .color-row input[type="color"] {
+            width: 36px;
+            height: 36px;
+            padding: 2px;
+            border-radius: 8px;
+        }
+
+        .preview-section {
+            margin: 40px 0;
+            padding: 30px;
+            background: #f7fafc;
+            border-radius: 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .preview-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #preview-frame {
+            width: 100%;
+            height: 400px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #E8DFF5 0%, #FCE1E4 100%);
+            color: #453952;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: #f0fff4;
+            border: 2px solid #9ae6b4;
+            border-radius: 12px;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .url-display {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 15px;
+        }
+
+        .copy-btn {
+            width: 100%;
+            padding: 12px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #38a169;
+        }
+
+        .copy-btn.copied {
+            background: #2d3748;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 20px;
+            background: #edf2f7;
+            border-radius: 10px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+
+        .instructions strong {
+            color: #2d3748;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #718096;
+            font-size: 13px;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .section-divider {
+            border-top: 2px solid #e2e8f0;
+            margin: 30px 0;
+            padding-top: 20px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #718096;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .info-box {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Ko-fi Support Box -->
+    <div class="kofi-container">
+        <div class="kofi-text">Are you loving it? Thank you for your support!</div>
+        <a href="https://ko-fi.com/kdigitalstudio" target="_blank" class="kofi-button">
+            ☕ Buy me a diet coke
+        </a>
+    </div>
+
+    <!-- Feedback Box -->
+    <div class="feedback-container">
+        <div class="feedback-text">Have feedback or a feature request?</div>
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSfns1MuZ5_-2Ks7enwSlN4VTMFqJ4LW60yn3Ujex4Uxn0CaXw/viewform?usp=header" target="_blank" class="feedback-button">
+            📝 Share feedback
+        </a>
+    </div>
+
+    <div class="container">
+        <h1>✓ Habit Tracker Widget Builder</h1>
+        <p class="subtitle">Track your habits with visual streaks in Notion</p>
+
+        <form id="habit-form">
+            <!-- Basic Settings -->
+            <div class="section-title">Habits</div>
+
+            <div class="info-box">
+                💡 Add up to 5 habits. Each habit gets its own row with customizable color. Progress resets automatically at the end of each week (Saturday night for Sunday start, Sunday night for Monday start). Click any day to mark it complete!
+            </div>
+
+            <div class="form-group">
+                <label>Your Habits</label>
+                <div class="habit-list" id="habit-list">
+                    <div class="habit-item" data-index="0">
+                        <input type="text" placeholder="e.g., Exercise" value="Exercise" class="habit-name">
+                        <input type="color" value="#48bb78" class="habit-color">
+                        <button type="button" class="remove-btn" onclick="removeHabit(0)">✕</button>
+                    </div>
+                    <div class="habit-item" data-index="1">
+                        <input type="text" placeholder="e.g., Read" value="Read" class="habit-name">
+                        <input type="color" value="#667eea" class="habit-color">
+                        <button type="button" class="remove-btn" onclick="removeHabit(1)">✕</button>
+                    </div>
+                    <div class="habit-item" data-index="2">
+                        <input type="text" placeholder="e.g., Meditate" value="Meditate" class="habit-name">
+                        <input type="color" value="#f4c3d9" class="habit-color">
+                        <button type="button" class="remove-btn" onclick="removeHabit(2)">✕</button>
+                    </div>
+                </div>
+                <button type="button" class="add-habit-btn" onclick="addHabit()">+ Add Habit</button>
+            </div>
+
+            <div class="form-group">
+                <label for="days-to-show">Days to Show</label>
+                <input type="number" id="days-to-show" min="7" max="30" value="7">
+            </div>
+
+            <div class="form-group">
+                <label>Week Starts On</label>
+                <div class="start-day-options" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 8px;">
+                    <div class="start-day-option selected" data-day="sunday" style="padding: 12px; border: 2px solid #667eea; background: #f7fafc; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 14px;">
+                        Sunday
+                    </div>
+                    <div class="start-day-option" data-day="monday" style="padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s; font-size: 14px;">
+                        Monday
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Settings -->
+            <div class="section-title">Display Options</div>
+
+            <div class="form-group">
+                <div class="toggle-group">
+                    <div class="toggle-item">
+                        <span>Show Streak Count</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-streak" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span>Show Day Labels</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-day-labels" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span>Show Border</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="show-border">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-item">
+                        <span>Compact Mode</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="compact-mode">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Theme</label>
+                <div class="toggle-group single">
+                    <div class="toggle-item">
+                        <span>Dark Mode</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="dark-mode">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Style Section -->
+            <div class="section-divider"></div>
+            <div class="section-title">Style</div>
+
+            <div class="form-group">
+                <div class="color-row">
+                    <label for="text-color">Text Color</label>
+                    <div class="color-row-right">
+                        <span class="color-hex" id="text-color-hex">#37352F</span>
+                        <input type="color" id="text-color" value="#37352F">
+                    </div>
+                </div>
+                <div class="color-row">
+                    <label for="label-color">Day Label Color</label>
+                    <div class="color-row-right">
+                        <span class="color-hex" id="label-color-hex">#718096</span>
+                        <input type="color" id="label-color" value="#718096">
+                    </div>
+                </div>
+                <div class="color-row">
+                    <label for="bg-color">Background Color</label>
+                    <div class="color-row-right">
+                        <span class="color-hex" id="bg-color-hex">#FFFFFF</span>
+                        <input type="color" id="bg-color" value="#FFFFFF">
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-section">
+                <div class="preview-label">Preview</div>
+                <iframe id="preview-frame" src=""></iframe>
+            </div>
+
+            <button type="submit" class="generate-btn">Generate</button>
+        </form>
+
+        <div id="result-section" class="result-section">
+            <div class="result-label">✅ Your Habit Tracker Widget URL:</div>
+            <div id="url-display" class="url-display"></div>
+            <button id="copy-btn" class="copy-btn">Copy URL</button>
+            
+            <div class="instructions">
+                <strong>How to add to Notion:</strong><br>
+                1. Copy the URL above<br>
+                2. In your Notion page, type <code>/embed</code><br>
+                3. Paste the URL and press Enter<br>
+                4. Click any day to mark it complete!<br><br>
+                <strong>Note:</strong> Your progress is saved automatically in your browser. The tracker resets at the end of each week based on your chosen start day (Saturday night for Sunday start, Sunday night for Monday start).
+            </div>
+        </div>
+
+        <div class="footer">
+            Made with ♥ by <a href="https://kdigitalstudio.com" target="_blank">KDigitalStudio</a>
+        </div>
+    </div>
+
+    <script>
+        // Base URL - UPDATE THIS with your hosted widget URL
+        const WIDGET_BASE_URL = 'https://kdigitalstudio.github.io/notion-habit-tracker/habit-widget.html';
+
+        // Get form elements
+        const form = document.getElementById('habit-form');
+        const previewFrame = document.getElementById('preview-frame');
+        const resultSection = document.getElementById('result-section');
+        const urlDisplay = document.getElementById('url-display');
+        const copyBtn = document.getElementById('copy-btn');
+
+        // Settings object
+        const settings = {
+            habits: [
+                { name: 'Exercise', color: '#48bb78' },
+                { name: 'Read', color: '#667eea' },
+                { name: 'Meditate', color: '#f4c3d9' }
+            ],
+            daysToShow: 7,
+            weekStart: 'sunday',
+            showStreak: true,
+            showDayLabels: true,
+            showBorder: false,
+            compactMode: false,
+            darkMode: false,
+            textColor: '#37352F',
+            labelColor: '#718096',
+            bgColor: '#FFFFFF'
+        };
+
+        let habitCount = 3;
+
+        // Start day selection
+        document.querySelectorAll('.start-day-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.start-day-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                    opt.style.borderColor = '#e2e8f0';
+                    opt.style.background = 'transparent';
+                });
+                this.classList.add('selected');
+                this.style.borderColor = '#667eea';
+                this.style.background = '#f7fafc';
+                settings.weekStart = this.dataset.day;
+                updatePreview();
+            });
+        });
+
+        // Add habit
+        function addHabit() {
+            if (habitCount >= 5) {
+                alert('Maximum 5 habits allowed');
+                return;
+            }
+
+            const habitList = document.getElementById('habit-list');
+            const newHabit = document.createElement('div');
+            newHabit.className = 'habit-item';
+            newHabit.setAttribute('data-index', habitCount);
+            newHabit.innerHTML = `
+                <input type="text" placeholder="e.g., New Habit" value="New Habit" class="habit-name">
+                <input type="color" value="#f59e0b" class="habit-color">
+                <button type="button" class="remove-btn" onclick="removeHabit(${habitCount})">✕</button>
+            `;
+            habitList.appendChild(newHabit);
+
+            settings.habits.push({ name: 'New Habit', color: '#f59e0b' });
+            habitCount++;
+
+            attachHabitListeners();
+            updatePreview();
+        }
+
+        // Remove habit
+        function removeHabit(index) {
+            if (habitCount <= 1) {
+                alert('Must have at least 1 habit');
+                return;
+            }
+
+            const habitItem = document.querySelector(`[data-index="${index}"]`);
+            if (habitItem) {
+                habitItem.remove();
+                habitCount--;
+                updateHabitsFromDOM();
+                updatePreview();
+            }
+        }
+
+        // Update habits array from DOM
+        function updateHabitsFromDOM() {
+            const habitItems = document.querySelectorAll('.habit-item');
+            settings.habits = [];
+            habitItems.forEach(item => {
+                const name = item.querySelector('.habit-name').value;
+                const color = item.querySelector('.habit-color').value;
+                settings.habits.push({ name, color });
+            });
+        }
+
+        // Attach listeners to habit inputs
+        function attachHabitListeners() {
+            document.querySelectorAll('.habit-name').forEach(input => {
+                input.addEventListener('input', function() {
+                    updateHabitsFromDOM();
+                    updatePreview();
+                });
+            });
+
+            document.querySelectorAll('.habit-color').forEach(input => {
+                input.addEventListener('input', function() {
+                    updateHabitsFromDOM();
+                    updatePreview();
+                });
+            });
+        }
+
+        // Days to show
+        document.getElementById('days-to-show').addEventListener('input', function() {
+            settings.daysToShow = parseInt(this.value) || 14;
+            updatePreview();
+        });
+
+        // Color pickers
+        const colorInputs = [
+            { id: 'text-color', key: 'textColor', hexId: 'text-color-hex' },
+            { id: 'label-color', key: 'labelColor', hexId: 'label-color-hex' },
+            { id: 'bg-color', key: 'bgColor', hexId: 'bg-color-hex' }
+        ];
+
+        colorInputs.forEach(({ id, key, hexId }) => {
+            const input = document.getElementById(id);
+            const hex = document.getElementById(hexId);
+            input.addEventListener('input', function() {
+                settings[key] = this.value;
+                hex.textContent = this.value.toUpperCase();
+                updatePreview();
+            });
+        });
+
+        // Toggle switches
+        const toggles = [
+            { id: 'show-streak', key: 'showStreak' },
+            { id: 'show-day-labels', key: 'showDayLabels' },
+            { id: 'show-border', key: 'showBorder' },
+            { id: 'compact-mode', key: 'compactMode' },
+            { id: 'dark-mode', key: 'darkMode' }
+        ];
+
+        toggles.forEach(({ id, key }) => {
+            document.getElementById(id).addEventListener('change', function() {
+                settings[key] = this.checked;
+                
+                // If dark mode is toggled, update color defaults
+                if (key === 'darkMode') {
+                    if (this.checked) {
+                        settings.bgColor = '#191919';
+                        settings.textColor = '#FFFFFF';
+                        settings.labelColor = '#9CA3AF';
+                        document.getElementById('bg-color').value = '#191919';
+                        document.getElementById('text-color').value = '#FFFFFF';
+                        document.getElementById('label-color').value = '#9CA3AF';
+                        document.getElementById('bg-color-hex').textContent = '#191919';
+                        document.getElementById('text-color-hex').textContent = '#FFFFFF';
+                        document.getElementById('label-color-hex').textContent = '#9CA3AF';
+                    } else {
+                        settings.bgColor = '#FFFFFF';
+                        settings.textColor = '#37352F';
+                        settings.labelColor = '#718096';
+                        document.getElementById('bg-color').value = '#FFFFFF';
+                        document.getElementById('text-color').value = '#37352F';
+                        document.getElementById('label-color').value = '#718096';
+                        document.getElementById('bg-color-hex').textContent = '#FFFFFF';
+                        document.getElementById('text-color-hex').textContent = '#37352F';
+                        document.getElementById('label-color-hex').textContent = '#718096';
+                    }
+                }
+                
+                updatePreview();
+            });
+        });
+
+        // Generate widget URL
+        function generateWidgetURL() {
+            const params = new URLSearchParams();
+            params.append('habits', JSON.stringify(settings.habits));
+            params.append('daysToShow', settings.daysToShow);
+            params.append('weekStart', settings.weekStart);
+            params.append('showStreak', settings.showStreak);
+            params.append('showDayLabels', settings.showDayLabels);
+            params.append('showBorder', settings.showBorder);
+            params.append('compactMode', settings.compactMode);
+            params.append('darkMode', settings.darkMode);
+            params.append('textColor', settings.textColor);
+            params.append('labelColor', settings.labelColor);
+            params.append('bgColor', settings.bgColor);
+            return WIDGET_BASE_URL + '?' + params.toString();
+        }
+
+        // Update preview
+        function updatePreview() {
+            const widgetHTML = generateWidgetHTML();
+            const blob = new Blob([widgetHTML], { type: 'text/html' });
+            const blobURL = URL.createObjectURL(blob);
+            previewFrame.src = blobURL;
+        }
+
+        // Generate widget HTML for preview
+        function generateWidgetHTML() {
+            const s = settings;
+            const cellSize = s.compactMode ? '24px' : '32px';
+            const gap = s.compactMode ? '4px' : '6px';
+            const fontSize = s.compactMode ? '11px' : '13px';
+
+            // Generate days for current week
+            const today = new Date();
+            const days = [];
+            
+            if (s.daysToShow === 7) {
+                // Show current week based on start preference
+                const todayDayOfWeek = today.getDay(); // 0 = Sunday
+                
+                if (s.weekStart === 'sunday') {
+                    // Start from this week's Sunday
+                    for (let i = todayDayOfWeek; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(date.getDate() - i);
+                        days.push(date);
+                    }
+                    // Fill remaining days
+                    while (days.length < 7) {
+                        const lastDate = days[days.length - 1];
+                        const nextDate = new Date(lastDate);
+                        nextDate.setDate(nextDate.getDate() + 1);
+                        days.push(nextDate);
+                    }
+                } else {
+                    // Start from this week's Monday
+                    const daysFromMonday = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1;
+                    for (let i = daysFromMonday; i >= 0; i--) {
+                        const date = new Date(today);
+                        date.setDate(date.getDate() - i);
+                        days.push(date);
+                    }
+                    // Fill remaining days
+                    while (days.length < 7) {
+                        const lastDate = days[days.length - 1];
+                        const nextDate = new Date(lastDate);
+                        nextDate.setDate(nextDate.getDate() + 1);
+                        days.push(nextDate);
+                    }
+                }
+            } else {
+                // For non-7 day views, show most recent X days
+                for (let i = s.daysToShow - 1; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    days.push(date);
+                }
+            }
+
+            // Get day labels
+            const dayLabels = days.map(date => {
+                return date.toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 1);
+            });
+
+            // Generate sample data (some days completed)
+            const sampleData = s.habits.map((habit, habitIndex) => {
+                return days.map((date, dayIndex) => {
+                    // Create some sample completed days - mark days that have passed
+                    const isPast = date <= today;
+                    return isPast && dayIndex % 3 !== habitIndex ? 1 : 0;
+                });
+            });
+
+            return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: ${s.bgColor};
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.tracker {
+    ${s.showBorder ? `border: 2px solid ${s.textColor}22; border-radius: 16px; padding: 20px;` : ''}
+}
+.habit-row {
+    display: flex;
+    align-items: center;
+    gap: ${gap};
+    margin-bottom: ${gap};
+}
+.habit-label {
+    width: 200px;
+    font-size: ${fontSize};
+    font-weight: 600;
+    color: ${s.textColor};
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-shrink: 0;
+    padding-right: 12px;
+}
+.streak-badge {
+    display: ${s.showStreak ? 'inline-flex' : 'none'};
+    align-items: center;
+    justify-content: center;
+    background: ${s.textColor}11;
+    color: ${s.textColor};
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+.days-grid {
+    display: flex;
+    gap: ${gap};
+}
+.day-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: ${gap};
+}
+.day-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: ${s.labelColor};
+    text-transform: uppercase;
+    height: 16px;
+    display: ${s.showDayLabels ? 'flex' : 'none'};
+    align-items: center;
+    justify-content: center;
+}
+.day-cell {
+    width: ${cellSize};
+    height: ${cellSize};
+    border-radius: 6px;
+    border: 2px solid currentColor;
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0.3;
+}
+.day-cell:hover {
+    opacity: 0.6;
+    transform: scale(1.1);
+}
+.day-cell.completed {
+    opacity: 1;
+    background: currentColor;
+}
+</style></head><body>
+<div class="tracker">
+    ${s.habits.map((habit, habitIndex) => `
+        <div class="habit-row">
+            <div class="habit-label">
+                ${habit.name}
+                <span class="streak-badge">${Math.floor(Math.random() * 10)}🔥</span>
+            </div>
+            <div class="days-grid">
+                ${dayLabels.map((day, dayIndex) => `
+                    <div class="day-column">
+                        ${habitIndex === 0 ? `<div class="day-label">${day}</div>` : '<div class="day-label"></div>'}
+                        <div class="day-cell ${sampleData[habitIndex][dayIndex] ? 'completed' : ''}" style="color: ${habit.color}"></div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('')}
+</div>
+</body></html>`;
+        }
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = generateWidgetURL();
+            urlDisplay.textContent = url;
+            resultSection.classList.add('show');
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+
+        // Copy URL
+        copyBtn.addEventListener('click', function() {
+            const url = urlDisplay.textContent;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function() {
+                    copyBtn.textContent = '✓ Copied!';
+                    copyBtn.classList.add('copied');
+                    setTimeout(function() {
+                        copyBtn.textContent = 'Copy URL';
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                }).catch(function() {
+                    fallbackCopyTextToClipboard(url);
+                });
+            } else {
+                fallbackCopyTextToClipboard(url);
+            }
+        });
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.top = '0';
+            textArea.style.left = '0';
+            textArea.style.width = '2em';
+            textArea.style.height = '2em';
+            textArea.style.padding = '0';
+            textArea.style.border = 'none';
+            textArea.style.outline = 'none';
+            textArea.style.boxShadow = 'none';
+            textArea.style.background = 'transparent';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    copyBtn.textContent = '✓ Copied!';
+                    copyBtn.classList.add('copied');
+                    setTimeout(function() {
+                        copyBtn.textContent = 'Copy URL';
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                }
+            } catch (err) {
+                copyBtn.textContent = '❌ Copy failed';
+                setTimeout(function() {
+                    copyBtn.textContent = 'Copy URL';
+                }, 3000);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Initial setup
+        attachHabitListeners();
+        updatePreview();
+    </script>
+</body>
+</html>
